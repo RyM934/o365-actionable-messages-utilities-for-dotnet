@@ -30,14 +30,12 @@ namespace Microsoft.O365.ActionableMessages.Utilities
 {
     using System;
     using System.Diagnostics;
-    using System.IdentityModel.Tokens.Jwt;
     using System.Linq;
     using System.Security.Claims;
     using System.Threading;
     using System.Threading.Tasks;
 
     using Microsoft.IdentityModel.Protocols;
-    using Microsoft.IdentityModel.Protocols.OpenIdConnect;
     using Microsoft.IdentityModel.Tokens;
 
     /// <summary>
@@ -60,9 +58,7 @@ namespace Microsoft.O365.ActionableMessages.Utilities
         /// </summary>
         public ActionableMessageTokenValidator()
         {
-            this.configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-                O365OpenIdConfiguration.MetadataUrl,
-                new OpenIdConnectConfigurationRetriever());
+            this.configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(O365OpenIdConfiguration.MetadataUrl);
         }
 
         /// <summary>
@@ -95,7 +91,7 @@ namespace Microsoft.O365.ActionableMessages.Utilities
             ClaimsPrincipal claimsPrincipal;
             ActionableMessageTokenValidationResult result = new ActionableMessageTokenValidationResult();
 
-            var parameters = new TokenValidationParameters()
+            var parameters = new System.IdentityModel.Tokens.TokenValidationParameters()
             {
                 ValidateIssuer = true,
                 ValidIssuers = new[] { O365OpenIdConfiguration.TokenIssuer },
@@ -107,9 +103,8 @@ namespace Microsoft.O365.ActionableMessages.Utilities
                 IssuerSigningKeys = o365OpenIdConfig.SigningKeys,
             };
 
-            JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
-            SecurityToken validatedToken = null;
-
+            System.IdentityModel.Tokens.JwtSecurityTokenHandler tokenHandler = 
+                new System.IdentityModel.Tokens.JwtSecurityTokenHandler();
             try
             {
                 // This will validate the token's lifetime and the following claims:
@@ -117,7 +112,7 @@ namespace Microsoft.O365.ActionableMessages.Utilities
                 // iss
                 // aud
                 //
-                claimsPrincipal = tokenHandler.ValidateToken(token, parameters, out validatedToken);
+                claimsPrincipal = tokenHandler.ValidateToken(token, parameters, out System.IdentityModel.Tokens.SecurityToken validatedToken);
             }
             catch (SecurityTokenSignatureKeyNotFoundException ex)
             {
