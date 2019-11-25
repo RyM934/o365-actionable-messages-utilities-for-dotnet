@@ -48,29 +48,6 @@ namespace Microsoft.O365.ActionableMessages.Utilities
         /// </summary>
         private const int TokenTimeValidationClockSkewBufferInMinutes = 5;
 
-        /// <summary>
-        /// The OpenID configuration data retriever.
-        /// </summary>
-        private readonly IConfigurationManager<OpenIdConnectConfiguration> configurationManager;
-
-        /// <summary>
-        /// Constructor of the <see cref="ActionableMessageTokenValidator"/> class.
-        /// </summary>
-        public ActionableMessageTokenValidator()
-        {
-            this.configurationManager = new ConfigurationManager<OpenIdConnectConfiguration>(O365OpenIdConfiguration.MetadataUrl);
-        }
-
-        /// <summary>
-        /// Constructor of the <see cref="ActionableMessageTokenValidator"/> class. 
-        /// DO NOT use this constructor. This constructor is used for unit testing.
-        /// </summary>
-        /// <param name="configurationManager">The configuration manager to read the OpenID configuration from.</param>
-        public ActionableMessageTokenValidator(IConfigurationManager<OpenIdConnectConfiguration> configurationManager)
-        {
-            this.configurationManager = configurationManager ?? throw new ArgumentNullException(nameof(configurationManager));
-        }
-
         /// <inheritdoc />
         public async Task<ActionableMessageTokenValidationResult> ValidateTokenAsync(
             string token, 
@@ -87,7 +64,7 @@ namespace Microsoft.O365.ActionableMessages.Utilities
             }
 
             CancellationToken cancellationToken;
-            OpenIdConnectConfiguration o365OpenIdConfig = await configurationManager.GetConfigurationAsync(cancellationToken);
+            OpenIdConnectConfiguration o365OpenIdConfig = await OpenIdConnectConfigurationRetriever.GetAsync(O365OpenIdConfiguration.MetadataUrl, cancellationToken);
             ClaimsPrincipal claimsPrincipal;
             ActionableMessageTokenValidationResult result = new ActionableMessageTokenValidationResult();
 
@@ -100,7 +77,7 @@ namespace Microsoft.O365.ActionableMessages.Utilities
                 ValidateLifetime = true,
                 ClockSkew = TimeSpan.FromMinutes(TokenTimeValidationClockSkewBufferInMinutes),
                 RequireSignedTokens = true,
-                IssuerSigningKeys = o365OpenIdConfig.SigningKeys,
+                IssuerSigningKeys = o365OpenIdConfig.SigningTokens.SelectMany(st => st.SecurityKeys),
             };
 
             System.IdentityModel.Tokens.JwtSecurityTokenHandler tokenHandler = 
